@@ -109,6 +109,7 @@ def inform(*args, **kwargs):
             }
         )
         if response.status_code is not 200:
+            print(url)
             print(response.status_code)
             print(response.content)
 
