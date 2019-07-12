@@ -23,6 +23,10 @@ def get_availability():
     url_main = "https://www.kimsufi.com/es/servidores.xml"
     url_avaliavility = "https://www.ovh.com/engine/api/dedicated/server/availabilities?country=es"
     response = requests.get(url_main)
+
+    if response.status_code != 200:
+        return None
+
     data = response.text
     matches = re.findall(r'<tr[^>]*>(.+?)</tr>', data, flags=re.DOTALL)
 
@@ -59,6 +63,10 @@ def get_availability():
             })
 
     response = requests.get(url_avaliavility)
+    
+    if response.status_code != 200:
+        return None
+    
     data = json.loads(response.content)
     parsed_data = list()
     for row in data:
@@ -132,26 +140,27 @@ def main():
         time.sleep(60 + random.randrange(-5, 5))
         try:
             new_items = get_availability()
-            new_items = {
-                item['hardware']: item
-                for item in new_items
-            }
+            if new_items is not None:
+                new_items = {
+                    item['hardware']: item
+                    for item in new_items
+                }
 
-            for key in items:
-                if key not in new_items:
-                    inform('Hardware {} ({}e) is not in the list anymore!'.format(
-                        key, items.get(key).get('price')))
-                elif new_items[key].get('availability') != items[key].get('availability'):
-                    inform('Hardware {} ({}e) has changed its availability from {} to {}'.format(key, new_items.get(
-                        key).get('price'), items[key].get('availability'), new_items[key].get('availability')))
+                for key in items:
+                    if key not in new_items:
+                        inform('Hardware {} ({}e) is not in the list anymore!'.format(
+                            key, items.get(key).get('price')))
+                    elif new_items[key].get('availability') != items[key].get('availability'):
+                        inform('Hardware {} ({}e) has changed its availability from {} to {}'.format(key, new_items.get(
+                            key).get('price'), items[key].get('availability'), new_items[key].get('availability')))
 
-            for key in new_items:
-                if key not in items:
-                    inform('Hardware {} ({}e) has been added to the list!'.format(
-                        key, new_items.get(key).get('price')))
+                for key in new_items:
+                    if key not in items:
+                        inform('Hardware {} ({}e) has been added to the list!'.format(
+                            key, new_items.get(key).get('price')))
 
-            items = new_items.copy()
-        except ValueError:
+                items = new_items.copy()
+        except:
             print('Failed at getting items. Will try it later.')
 
 
